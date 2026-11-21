@@ -1,0 +1,32 @@
+Multilevel autonomous fleet
+
+CLASS Vehicle
+ PROTECTED: vehicleVIN STRING; baseWeightKg REAL
+ PUBLIC: CONSTRUCTOR(vin,weight): vehicleVIN<-vin; baseWeightKg<-weight
+ VIRTUAL DESTRUCTOR()
+ METHOD DisplaySpecs(): PRINT vehicleVIN,baseWeightKg
+ENDCLASS
+CLASS AutonomousVehicle EXTENDS Vehicle
+ PROTECTED: lidarSensorID STRING; firmwareVersion STRING
+ PUBLIC: CONSTRUCTOR(vin,weight,lidar,fw): Vehicle(vin,weight)
+  lidarSensorID<-lidar; firmwareVersion<-fw
+ENDCLASS
+CLASS DeliveryDrone EXTENDS AutonomousVehicle
+ PRIVATE: payloadCapacityKg REAL; batteryChargePercent REAL
+ PUBLIC: CONSTRUCTOR(vin,weight,lidar,fw,payload,battery): AutonomousVehicle(vin,weight,lidar,fw)
+  payloadCapacityKg<-payload; batteryChargePercent<-battery
+ METHOD DisplayFlightStatus()
+  DisplaySpecs(); PRINT lidarSensorID,firmwareVersion,payloadCapacityKg,batteryChargePercent
+ END METHOD
+ENDCLASS
+BEGIN MAIN
+ DECLARE basePtr AS POINTER TO Vehicle
+ basePtr<-NEW DeliveryDrone("DR-007",12,"L-10","v2.1",5,85)
+ basePtr->DisplaySpecs()
+ DECLARE dronePtr AS POINTER TO DeliveryDrone<-DYNAMIC_CAST DeliveryDrone*(basePtr)
+ IF dronePtr IS NOT NULL THEN dronePtr->DisplayFlightStatus() ENDIF
+ DELETE basePtr
+END MAIN
+
+TRACE
+Construction: Vehicle(VIN,12) -> AutonomousVehicle(L-10,v2.1) -> DeliveryDrone(5,85). Base pointer displays DR-007,12; downcast displays full telemetry. Destruction runs reverse order.

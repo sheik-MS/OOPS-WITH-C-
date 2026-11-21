@@ -1,0 +1,42 @@
+CLASS RegisterBank
+PRIVATE:
+    registers: ARRAY[8] OF INTEGER
+    errorSink: INTEGER
+PUBLIC:
+    CONSTRUCTOR()
+        FOR i <- 0 TO 7 DO registers[i] <- 0 ENDFOR
+        errorSink <- -1
+    END CONSTRUCTOR
+    METHOD GetRegister(index: INTEGER) RETURNS REF INTEGER
+        IF index >= 0 AND index < 8 THEN
+            RETURN REF registers[index]
+        ELSE
+            PRINT "Alert: invalid register index", index
+            RETURN REF errorSink
+        ENDIF
+    END METHOD
+    METHOD DisplayState()
+        FOR i <- 0 TO 7
+            PRINT "R", i, " = 0x", TO_HEX(registers[i])
+        ENDFOR
+    END METHOD
+ENDCLASS
+BEGIN MAIN
+    bank: RegisterBank
+    bank.GetRegister(0) <- 170
+    bank.GetRegister(1) <- 255
+    readVal: INTEGER <- bank.GetRegister(0)
+    PRINT "Read value:", readVal
+    bank.GetRegister(10) <- 999
+    bank.DisplayState()
+END MAIN
+
+TRACE
+Operation | R0 | R1 | errorSink | Observation
+Constructor | 0 | 0 | -1 | all 8 slots zero
+GetRegister(0) <- 170 | 170 | 0 | -1 | valid reference
+GetRegister(1) <- 255 | 170 | 255 | -1 | valid reference
+readVal <- GetRegister(0) | 170 | 255 | -1 | readVal = 170
+GetRegister(10) <- 999 | 170 | 255 | 999 | alert; sink modified
+DisplayState | 0xAA | 0xFF | 999 | R2–R7 = 0x00
+A function returning REF INTEGER produces an assignable lvalue designating an existing integer object; therefore bank.GetRegister(0) <- 170 modifies registers[0] directly. A real byte register should additionally validate the 0..255 range; the requested INTEGER error sink intentionally accepts 999.

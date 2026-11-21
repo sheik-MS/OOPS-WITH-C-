@@ -1,0 +1,38 @@
+UNIT III | SECTION B
+Vector2D with Prefix, Postfix and +=
+
+CLASS Vector2D
+ PRIVATE: x AS REAL; y AS REAL
+ PUBLIC:
+  CONSTRUCTOR(newX AS REAL=0.0, newY AS REAL=0.0)
+    x <- newX; y <- newY
+  END CONSTRUCTOR
+  OPERATOR ++() RETURNS REF Vector2D   // PREFIX
+    x <- x+1.0; y <- y+1.0
+    RETURN REF THIS
+  END OPERATOR
+  OPERATOR ++(dummy AS INTEGER) RETURNS Vector2D // POSTFIX
+    previous <- COPY OF THIS
+    x <- x+1.0; y <- y+1.0
+    RETURN previous AS VALUE
+  END OPERATOR
+  OPERATOR +=(REF rhs AS CONST Vector2D) RETURNS REF Vector2D
+    x <- x+rhs.x; y <- y+rhs.y
+    RETURN REF THIS
+  END OPERATOR
+  METHOD Display() OUTPUT "(", x, ", ", y, ")" END METHOD
+ENDCLASS
+MAIN
+  v1 <- Vector2D(5.0,8.0)
+  v2 <- ++v1       // increment v1 first, then copy (6,9) to v2
+  v3 <- v1++       // snapshot (6,9) to v3, then increment v1 to (7,10)
+  OUTPUT v1,v2,v3
+  v1 += Vector2D(2,3)
+  OUTPUT v1        // (9,13)
+END MAIN
+TRACE
+Action | v1 | v2 | v3
+Initial | (5,8) | not initialized | not initialized
+v2 <- ++v1 | (6,9) | (6,9) | not initialized
+v3 <- v1++ | (7,10) | (6,9) | (6,9)
+v1 += (2,3) | (9,13) | (6,9) | (6,9)

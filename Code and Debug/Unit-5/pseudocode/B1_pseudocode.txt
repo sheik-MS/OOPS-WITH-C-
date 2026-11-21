@@ -1,0 +1,82 @@
+SECTION B / QUESTION 1: Universal Payment Gateway with Runtime Polymorphism
+=================================================================
+
+ABSTRACT CLASS PaymentGateway
+PUBLIC:
+    PURE VIRTUAL METHOD Authorize(amount AS REAL) RETURNS BOOLEAN
+    PURE VIRTUAL METHOD Capture() RETURNS BOOLEAN
+    VIRTUAL DESTRUCTOR()
+ENDCLASS
+
+CLASS CreditCardGateway INHERITS PUBLIC PaymentGateway
+PRIVATE:
+    cardNumber AS STRING
+    cvv AS STRING
+    authorized AS BOOLEAN <- FALSE
+    pendingAmount AS REAL <- 0
+PUBLIC:
+    CONSTRUCTOR(cardNumber, cvv)
+        THIS.cardNumber <- cardNumber; THIS.cvv <- cvv
+    OVERRIDE METHOD Authorize(amount AS REAL) RETURNS BOOLEAN
+        authorized <- (amount > 0 AND Length(cardNumber) = 16
+                       AND EveryCharacterIsDigit(cardNumber)
+                       AND Length(cvv) = 3 AND EveryCharacterIsDigit(cvv))
+        IF authorized THEN pendingAmount <- amount
+        RETURN authorized
+    END METHOD
+    OVERRIDE METHOD Capture() RETURNS BOOLEAN
+        IF NOT authorized THEN RETURN FALSE
+        PRINT "Card capture: $", pendingAmount
+        authorized <- FALSE
+        RETURN TRUE
+    END METHOD
+    OVERRIDE DESTRUCTOR()  // no extra resources
+ENDCLASS
+
+CLASS CryptoGateway INHERITS PUBLIC PaymentGateway
+PRIVATE:
+    walletHash AS STRING
+    availableGasUnits AS REAL
+    requiredGasUnits AS REAL
+    authorized AS BOOLEAN <- FALSE
+    pendingAmount AS REAL <- 0
+PUBLIC:
+    CONSTRUCTOR(hash, gasAvailable, gasRequired)
+        walletHash <- hash
+        availableGasUnits <- gasAvailable
+        requiredGasUnits <- gasRequired
+    OVERRIDE METHOD Authorize(amount AS REAL) RETURNS BOOLEAN
+        walletOK <- StartsWith(walletHash, "0x") AND Length(walletHash) > 2
+        gasOK <- availableGasUnits >= requiredGasUnits
+        authorized <- amount > 0 AND walletOK AND gasOK
+        IF authorized THEN pendingAmount <- amount
+        RETURN authorized
+    END METHOD
+    OVERRIDE METHOD Capture() RETURNS BOOLEAN
+        IF NOT authorized THEN RETURN FALSE
+        PRINT "Crypto capture: $", pendingAmount
+        authorized <- FALSE
+        RETURN TRUE
+    END METHOD
+    OVERRIDE DESTRUCTOR()
+ENDCLASS
+
+PROCEDURE Main()
+    DECLARE gatewayPtr AS POINTER TO PaymentGateway
+    gatewayPtr <- NEW CryptoGateway("0xabc123", 30000, 21000)
+    IF gatewayPtr->Authorize(1500.00) THEN
+        IF gatewayPtr->Capture() THEN PRINT "Payment successful"
+        ELSE PRINT "Capture failed"
+    ELSE PRINT "Authorization denied"
+    DEALLOCATE gatewayPtr  // virtual derived->base destructor chain
+END PROCEDURE
+
+DRY RUN TRACE:
+Step | Operation | State / Result
+Create gateway | CryptoGateway("0xabc123",30000,21000) | authorized = FALSE
+Authorize(1500) | wallet prefix valid; 30000 >= 21000 | authorized = TRUE
+Capture() | pendingAmount = 1500; capture success | authorized = FALSE
+Delete base pointer | CryptoGateway then PaymentGateway destructors | released
+
+NOTES:
+Payment successful (simulated). The source provides no production blockchain/credit validation service; all validation is illustrative.

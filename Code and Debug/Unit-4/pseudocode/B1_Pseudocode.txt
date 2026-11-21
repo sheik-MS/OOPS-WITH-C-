@@ -1,0 +1,29 @@
+University ERP hybrid hierarchy
+
+CLASS Person
+ PROTECTED: personID STRING; fullName STRING; email STRING
+ PUBLIC: CONSTRUCTOR(id,name,mail): personID<-id; fullName<-name; email<-mail
+ENDCLASS
+CLASS Student VIRTUALLY EXTENDS Person
+ PROTECTED: gpa REAL; creditsEarned INTEGER
+ PUBLIC: CONSTRUCTOR(g,c): gpa<-g; creditsEarned<-c
+ENDCLASS
+CLASS Faculty VIRTUALLY EXTENDS Person
+ PROTECTED: academicDepartment STRING; rankTitle STRING
+ PUBLIC: CONSTRUCTOR(dept,rank): academicDepartment<-dept; rankTitle<-rank
+ENDCLASS
+CLASS TeachingAssistant EXTENDS Student, Faculty
+ PRIVATE: stipendAmount REAL; assignedCourse STRING
+ PUBLIC: CONSTRUCTOR(id,name,mail,g,c,dept,rank,stipend,course): Person(id,name,mail), Student(g,c), Faculty(dept,rank)
+  stipendAmount<-stipend; assignedCourse<-course
+ METHOD DisplayTARecord()
+  PRINT personID, fullName, gpa, academicDepartment, stipendAmount
+ END METHOD
+ENDCLASS
+BEGIN MAIN
+ DECLARE ta AS TeachingAssistant <- NEW TeachingAssistant("TA101","Ananya","ananya@univ.edu",8.8,90,"CSE","Assistant",1200,"C++")
+ ta.DisplayTARecord()
+END MAIN
+
+TRACE
+Person virtual base constructed once -> Student -> Faculty -> TeachingAssistant. Output: TA101 | Ananya | 8.8 | CSE | 1200.

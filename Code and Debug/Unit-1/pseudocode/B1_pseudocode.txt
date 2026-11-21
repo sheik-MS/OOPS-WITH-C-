@@ -1,0 +1,49 @@
+CLASS WaterConsumer
+  PRIVATE:
+    consumerID: STRING
+    previousReading, currentReading: REAL
+    unitsConsumed, totalBill: REAL
+    valid: BOOLEAN
+  PUBLIC:
+    CONSTRUCTOR Initialize(id: STRING, prev: REAL, curr: REAL)
+      consumerID ← id
+      valid ← (prev >= 0) AND (curr >= prev)
+      IF NOT valid THEN
+        PRINT "Invalid meter readings"
+        RETURN
+      ENDIF
+      previousReading ← prev
+      currentReading ← curr
+      unitsConsumed ← 0
+      totalBill ← 0
+    END CONSTRUCTOR
+    METHOD CalculateConsumption()
+      IF NOT valid THEN RETURN ENDIF
+      unitsConsumed ← currentReading - previousReading
+    END METHOD
+    METHOD ComputeBill()
+      IF NOT valid THEN RETURN ENDIF
+      tier1, tier2, tier3, base, surcharge: REAL
+      tier1 ← MIN(unitsConsumed, 100)
+      tier2 ← MIN(MAX(unitsConsumed - 100, 0), 200)
+      tier3 ← MAX(unitsConsumed - 300, 0)
+      base ← tier1 * 1.50 + tier2 * 2.50 + tier3 * 4.00
+      surcharge ← 0
+      IF unitsConsumed > 300 THEN
+        surcharge ← base * 0.10
+      ENDIF
+      totalBill ← base + surcharge
+    END METHOD
+    METHOD DisplayBill()
+      IF NOT valid THEN RETURN ENDIF
+      PRINT consumerID, previousReading, currentReading
+      PRINT unitsConsumed, totalBill
+    END METHOD
+ENDCLASS
+BEGIN Main
+  consumer: WaterConsumer
+  consumer.Initialize("WC001", 1450.0, 1820.0)
+  consumer.CalculateConsumption()
+  consumer.ComputeBill()
+  consumer.DisplayBill()
+END

@@ -1,0 +1,66 @@
+UNIT III | SECTION B
+Dynamic String Engine with Deep Copy and +
+
+CLASS DynStr
+  PRIVATE:
+    dataPtr AS POINTER TO CHARACTER
+    charCount AS INTEGER
+  PUBLIC:
+    CONSTRUCTOR(sourceString AS STRING)
+      charCount <- LENGTH(sourceString)
+      dataPtr <- ALLOCATE ARRAY[charCount + 1] OF CHARACTER
+      FOR i <- 0 TO charCount - 1 DO dataPtr[i] <- sourceString[i] ENDFOR
+      dataPtr[charCount] <- NULL_TERMINATOR
+    END CONSTRUCTOR
+
+    COPY CONSTRUCTOR(REF other AS CONST DynStr)
+      charCount <- other.charCount
+      dataPtr <- ALLOCATE ARRAY[charCount + 1] OF CHARACTER
+      FOR i <- 0 TO charCount DO dataPtr[i] <- other.dataPtr[i] ENDFOR
+    END COPY CONSTRUCTOR
+
+    METHOD Assign(REF other AS CONST DynStr) RETURNS REF DynStr
+      IF ADDRESS(THIS) != ADDRESS(other) THEN
+        fresh <- ALLOCATE ARRAY[other.charCount + 1] OF CHARACTER
+        FOR i <- 0 TO other.charCount DO fresh[i] <- other.dataPtr[i] ENDFOR
+        DEALLOCATE ARRAY dataPtr
+        dataPtr <- fresh; charCount <- other.charCount
+      ENDIF
+      RETURN REF THIS
+    END METHOD
+
+    OPERATOR +(REF rhs AS CONST DynStr) RETURNS DynStr
+      combinedLength <- charCount + rhs.charCount
+      temp <- ALLOCATE ARRAY[combinedLength + 1] OF CHARACTER
+      FOR i <- 0 TO charCount - 1 DO temp[i] <- dataPtr[i] ENDFOR
+      FOR j <- 0 TO rhs.charCount - 1 DO temp[charCount+j] <- rhs.dataPtr[j] ENDFOR
+      temp[combinedLength] <- NULL_TERMINATOR
+      answer <- NEW DynStr(STRING_FROM_BUFFER(temp))
+      DEALLOCATE ARRAY temp
+      RETURN answer AS VALUE  // independent owning storage; no shallow alias
+    END OPERATOR
+
+    DESTRUCTOR()
+      DEALLOCATE ARRAY dataPtr
+      dataPtr <- NULL; charCount <- 0
+    END DESTRUCTOR
+    METHOD Display() OUTPUT STRING_FROM_BUFFER(dataPtr) END METHOD
+ENDCLASS
+
+MAIN
+  strA <- DynStr("Hello ")
+  strB <- DynStr("World!")
+  strC <- strA + strB
+  strC.Display()    // Hello World!
+  // Destruct objects in reverse order: strC, strB, strA
+END MAIN
+
+TRACE (buffer sizes include the terminal NUL)
+Step | Object/temporary | Text | chars | allocated bytes
+1 | strA | "Hello " | 6 | 7
+2 | strB | "World!" | 6 | 7
+3 | temp | "Hello World!" | 12 | 13
+4 | strC | "Hello World!" | 12 | 13 (own independent buffer)
+5 | temp deallocated | - | - | freed 13 bytes
+6 | at end of scope | strC, strB, strA | - | each owned buffer freed once
+NOTE: A compiler may elide a return copy; no additional allocation is guaranteed.

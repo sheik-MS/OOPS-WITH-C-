@@ -1,0 +1,26 @@
+Zero-copy product pointer sorting
+
+CLASS Product
+ PUBLIC: sku STRING; price REAL; stockCount INTEGER
+ CONSTRUCTOR(s,p,count): sku<-s; price<-p; stockCount<-count
+ METHOD PrintProduct(): PRINT sku,price,stockCount
+ENDCLASS
+BEGIN MAIN
+ DECLARE catalog AS ARRAY[3] OF POINTER TO Product
+ catalog[0]<-NEW Product("Laptop",1200,4)
+ catalog[1]<-NEW Product("Mouse",25,30)
+ catalog[2]<-NEW Product("Monitor",350,8)
+ FOR i<-0 TO 1
+  FOR j<-0 TO 1-i
+   IF catalog[j]->price > catalog[j+1]->price THEN
+    DECLARE temp AS POINTER TO Product<-catalog[j]
+    catalog[j]<-catalog[j+1]; catalog[j+1]<-temp
+   ENDIF
+  ENDFOR
+ ENDFOR
+ FOR i<-0 TO 2: catalog[i]->PrintProduct() ENDFOR
+ FOR i<-0 TO 2: DELETE catalog[i] ENDFOR
+END MAIN
+
+TRACE
+Initial pointer order Laptop(1200), Mouse(25), Monitor(350). Pass 1 j=0 swap -> Mouse,Laptop,Monitor; j=1 swap -> Mouse,Monitor,Laptop. Pass 2 j=0 no swap. Final Mouse(25),Monitor(350),Laptop(1200). Objects never copied.

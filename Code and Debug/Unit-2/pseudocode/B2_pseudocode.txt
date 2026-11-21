@@ -1,0 +1,59 @@
+CLASS Matrix2D
+PRIVATE:
+    grid: ARRAY[3][3] OF REAL
+PUBLIC:
+    METHOD Initialize()
+    METHOD SetElement(row: INTEGER, col: INTEGER, value: REAL)
+    METHOD GetElement(row: INTEGER, col: INTEGER) RETURNS REAL
+    METHOD Display()
+    FRIEND FUNCTION ComputeCrossTrace(A: REF Matrix2D, B: REF Matrix2D) RETURNS REAL
+ENDCLASS
+METHOD Matrix2D::Initialize()
+    FOR row <- 0 TO 2
+        FOR col <- 0 TO 2
+            grid[row][col] <- 0
+        ENDFOR
+    ENDFOR
+END METHOD
+METHOD Matrix2D::SetElement(row: INTEGER, col: INTEGER, value: REAL)
+    IF row < 0 OR row >= 3 OR col < 0 OR col >= 3 THEN
+        ERROR "Index out of bounds"; RETURN
+    ENDIF
+    grid[row][col] <- value
+END METHOD
+METHOD Matrix2D::GetElement(row: INTEGER, col: INTEGER) RETURNS REAL
+    IF row < 0 OR row >= 3 OR col < 0 OR col >= 3 THEN
+        ERROR "Index out of bounds"; RETURN 0
+    ENDIF
+    RETURN grid[row][col]
+END METHOD
+METHOD Matrix2D::Display()
+    FOR row <- 0 TO 2
+        FOR col <- 0 TO 2
+            PRINT grid[row][col]
+        ENDFOR
+        PRINT NEWLINE
+    ENDFOR
+END METHOD
+FRIEND FUNCTION ComputeCrossTrace(A: REF Matrix2D, B: REF Matrix2D) RETURNS REAL
+    total: REAL <- 0
+    FOR i <- 0 TO 2
+        total <- total + A.grid[i][i] * B.grid[i][i]
+    ENDFOR
+    RETURN total
+END FUNCTION
+BEGIN MAIN
+    A, B: Matrix2D
+    A.Initialize(); B.Initialize()
+    A.SetElement(0,0,2); A.SetElement(1,1,4); A.SetElement(2,2,6)
+    B.SetElement(0,0,1); B.SetElement(1,1,3); B.SetElement(2,2,5)
+    A.Display(); B.Display()
+    PRINT ComputeCrossTrace(A,B)
+END MAIN
+
+TRACE
+i | A diagonal | B diagonal | Product | Running total
+0 | 2 | 1 | 2 | 2
+1 | 4 | 3 | 12 | 14
+2 | 6 | 5 | 30 | 44
+Cross trace = 2×1 + 4×3 + 6×5 = 44.

@@ -1,0 +1,53 @@
+UNIT III | SECTION B
+Financial Currency with Stream IO and Unary Minus
+
+CLASS Currency
+ PRIVATE:
+  dollars AS INTEGER; cents AS INTEGER
+  // Canonical representation is signed total cents; displayed sign is separate.
+  METHOD SetFromTotalCents(total AS INTEGER)
+    sign <- IF total < 0 THEN -1 ELSE 1
+    magnitude <- ABS(total)
+    dollars <- sign * (magnitude DIV 100)
+    cents <- sign * (magnitude MOD 100)
+    // Display calculates sign from total, not dollars alone.
+  END METHOD
+  METHOD ToTotalCents() RETURNS INTEGER
+    RETURN dollars * 100 + cents
+  END METHOD
+ PUBLIC:
+  CONSTRUCTOR(d AS INTEGER = 0, c AS INTEGER = 0)
+    SetFromTotalCents(d * 100 + c)
+  END CONSTRUCTOR
+  OPERATOR -() RETURNS Currency
+    total <- -ToTotalCents()
+    result <- Currency()
+    result.SetFromTotalCents(total)
+    RETURN result
+  END OPERATOR
+  FRIEND OPERATOR <<(REF outStream, REF cur AS CONST Currency)
+    total <- cur.ToTotalCents()
+    IF total < 0 THEN WRITE(outStream, "-$") ELSE WRITE(outStream, "$") ENDIF
+    magnitude <- ABS(total)
+    WRITE(outStream, magnitude DIV 100, ".", ZERO_PAD_2(magnitude MOD 100))
+    RETURN REF outStream
+  END OPERATOR
+  FRIEND OPERATOR >>(REF inStream, REF cur AS Currency)
+    READ(inStream, d, c)    // two signed integers separated by whitespace
+    IF READ_SUCCEEDED THEN cur.SetFromTotalCents(100*d+c) ENDIF
+    RETURN REF inStream
+  END OPERATOR
+ENDCLASS
+MAIN
+  INPUT d=5, c=275
+  cur <- Currency(d,c)
+  OUTPUT cur           // $7.75
+  debt <- -cur
+  OUTPUT debt          // -$7.75
+END MAIN
+TRACE
+1 | d=5, c=275 | total=5*100+275=775 cents
+2 | normalization | dollars=7, cents=75 | $7.75
+3 | unary minus | total=-775 cents | dollars=-7, cents=-75
+4 | signed display | -$7.75
+NOTE: Input format uses two integers (d c). Canonical signed cents avoids ambiguous forms like $0.-50.

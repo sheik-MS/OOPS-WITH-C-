@@ -1,0 +1,59 @@
+SECTION B / QUESTION 4: File Ingestion Pipeline with Stack Unwinding & Catch-All
+=================================================================
+
+CLASS CRCValidationException EXTENDS Exception
+PUBLIC:
+    expectedChecksum AS INTEGER
+    calculatedChecksum AS INTEGER
+    CONSTRUCTOR(expected, calculated)
+        expectedChecksum <- expected
+        calculatedChecksum <- calculated
+ENDCLASS
+
+CLASS ResourceGuard
+PRIVATE:
+    fileHandle AS HANDLE
+PUBLIC:
+    CONSTRUCTOR(fileName AS STRING)
+        fileHandle <- OpenFile(fileName)
+        IF fileHandle INVALID THEN THROW NEW FileOpenException(fileName)
+        PRINT "File handle acquired"
+    DESTRUCTOR()
+        IF fileHandle VALID THEN
+            CloseFile(fileHandle)
+            PRINT "File handle released"
+        END IF
+ENDCLASS
+
+PROCEDURE IngestDataStream(fileName AS STRING)
+    DECLARE guard AS ResourceGuard(fileName) // automatic local object
+    blocks <- ReadBlocks(fileName)
+    calculated <- CalculateCRC(blocks)
+    expected <- ReadStoredCRC(fileName)
+    IF calculated != expected THEN
+        THROW NEW CRCValidationException(expected, calculated)
+    END IF
+    PRINT "Ingestion successful"
+END PROCEDURE
+
+PROCEDURE Main()
+    TRY
+        IngestDataStream("telemetry.bin")
+    CATCH (REF e AS CRCValidationException)
+        PRINT "CRC mismatch: expected ", e.expectedChecksum,
+              ", calculated ", e.calculatedChecksum
+    CATCH (...)
+        PRINT "Unexpected ingestion failure"
+    END TRY
+END PROCEDURE
+
+DRY RUN TRACE:
+Step | Operation | State / Result
+Enter ingestion | OpenFile succeeds | guard constructed
+CRC check | example expected 0xA1, calculated 0xB2 | mismatch
+THROW | CRCValidationException created | begin unwind
+Stack unwind | ResourceGuard destructor; close handle | before Main catch
+Specific catch | Print CRC mismatch | exception handled
+
+NOTES:
+A successful guard construction is assumed. Automatic objects fully constructed in the unwound scope are destroyed in reverse order before entering Main’s handler.

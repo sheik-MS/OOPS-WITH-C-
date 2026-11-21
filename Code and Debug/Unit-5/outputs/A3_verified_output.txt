@@ -1,0 +1,7 @@
+Compiler: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror
+Compilation: PASS
+Exit: 0
+
+[AUDIT LOG]: Intercepted DB error.
+[AUDIT LOG]: Query timed out connecting to shard 3
+Client caught TimeoutError! Duration: 5000 ms

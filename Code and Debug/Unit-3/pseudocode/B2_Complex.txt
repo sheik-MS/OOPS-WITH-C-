@@ -1,0 +1,36 @@
+UNIT III | SECTION B
+Complex Number System
+
+CLASS Complex
+ PRIVATE: real AS REAL; imag AS REAL
+ PUBLIC:
+  CONSTRUCTOR() real <- 0; imag <- 0 END CONSTRUCTOR
+  CONSTRUCTOR(r AS REAL) real <- r; imag <- 0 END CONSTRUCTOR
+  CONSTRUCTOR(r AS REAL, i AS REAL) real <- r; imag <- i END CONSTRUCTOR
+  OPERATOR +(REF other AS CONST Complex) RETURNS Complex
+    RETURN Complex(real + other.real, imag + other.imag)
+  END OPERATOR
+  OPERATOR *(REF other AS CONST Complex) RETURNS Complex
+    RETURN Complex(real*other.real - imag*other.imag,
+                   real*other.imag + imag*other.real)
+  END OPERATOR
+  OPERATOR ==(REF other AS CONST Complex) RETURNS BOOLEAN
+    RETURN (real = other.real AND imag = other.imag)
+  END OPERATOR
+  METHOD Display()
+    IF imag < 0 THEN OUTPUT real, " - ", ABS(imag), "i"
+    ELSE OUTPUT real, " + ", imag, "i" ENDIF
+  END METHOD
+ENDCLASS
+MAIN
+  zero <- Complex(); purelyReal <- Complex(8)
+  c1 <- Complex(3,2); c2 <- Complex(1,4)
+  sum <- c1+c2; product <- c1*c2
+  sum.Display()      // 4 + 6i
+  product.Display()  // -5 + 14i
+  OUTPUT (c1 == c2) // FALSE
+END MAIN
+TRACE
+real multiplication: 3*1 - 2*4 = 3 - 8 = -5
+imag multiplication: 3*4 + 2*1 = 12 + 2 = 14
+Product = -5 + 14i

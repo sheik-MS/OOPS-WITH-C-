@@ -1,0 +1,37 @@
+Abstract polymorphic payroll
+
+ABSTRACT CLASS Employee
+ PROTECTED: employeeID STRING; name STRING
+ PUBLIC: CONSTRUCTOR(id,n): employeeID<-id; name<-n
+ ABSTRACT METHOD CalculatePay() RETURNS REAL
+ METHOD DisplayHeader(): PRINT employeeID,name
+ VIRTUAL DESTRUCTOR()
+ENDCLASS
+CLASS SalariedEmployee EXTENDS Employee
+ PRIVATE: monthlySalary REAL
+ PUBLIC: CONSTRUCTOR(id,n,s): Employee(id,n); monthlySalary<-s
+ METHOD CalculatePay() RETURNS REAL: RETURN monthlySalary
+ENDCLASS
+CLASS HourlyEmployee EXTENDS Employee
+ PRIVATE: hourlyWage REAL; hoursWorked REAL
+ PUBLIC: CONSTRUCTOR(id,n,w,h): Employee(id,n); hourlyWage<-w; hoursWorked<-h
+ METHOD CalculatePay() RETURNS REAL
+  IF hoursWorked<=40 THEN RETURN hourlyWage*hoursWorked
+  ELSE RETURN 40*hourlyWage+(hoursWorked-40)*hourlyWage*1.5 ENDIF
+ END METHOD
+ENDCLASS
+BEGIN MAIN
+ DECLARE staff AS ARRAY[2] OF POINTER TO Employee
+ staff[0]<-NEW SalariedEmployee("E1","Alice",8500)
+ staff[1]<-NEW HourlyEmployee("E2","Bob",50,48)
+ DECLARE total AS REAL<-0
+ FOR i<-0 TO 1
+  staff[i]->DisplayHeader(); DECLARE pay AS REAL<-staff[i]->CalculatePay()
+  PRINT pay; total<-total+pay
+ ENDFOR
+ PRINT total
+ FOR i<-0 TO 1: DELETE staff[i] ENDFOR
+END MAIN
+
+TRACE
+Salaried: 8500; hourly regular 40*50=2000; overtime 8*50*1.5=600; hourly total=2600; disbursement=11100.

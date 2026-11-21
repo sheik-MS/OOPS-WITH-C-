@@ -1,0 +1,54 @@
+SECTION B / QUESTION 5: Scientific Telemetry Calibration with noexcept Contracts
+=================================================================
+
+CLASS OutOfBoundsException EXTENDS Exception
+PUBLIC:
+    invalidTemperature AS REAL
+    CONSTRUCTOR(value)
+        invalidTemperature <- value
+ENDCLASS
+
+FUNCTION CalibrateThermalSensors(rawVoltage AS REAL)
+    RETURNS REAL NOEXCEPT(FALSE)
+    // Illustrative calibration formula selected to show the specified trace.
+    // It is not given in the question bank and is not a sensor datasheet formula.
+    finalTemp <- rawVoltage * 100.0 - 500.0
+    IF finalTemp < -273.15 OR finalTemp > 1500.0 THEN
+        THROW NEW OutOfBoundsException(finalTemp)
+    END IF
+    RETURN finalTemp
+END FUNCTION
+
+PROCEDURE CommitTelemetry(finalTemp AS REAL) NOEXCEPT
+    TRY
+        HardwareBusWrite(finalTemp)
+        PRINT "Committed temperature: ", finalTemp
+    CATCH (...)
+        // Log only through a guaranteed nonthrowing routine.
+        NonThrowingHardwareErrorFlag()
+        // Suppress failure so the noexcept boundary is respected.
+    END TRY
+END PROCEDURE
+
+PROCEDURE Main()
+    rawVoltage <- 2.00   // example -> -300 C using illustrative formula
+    TRY
+        finalTemp <- CalibrateThermalSensors(rawVoltage)
+        CommitTelemetry(finalTemp)  // not reached if calibration throws
+    CATCH (REF e AS OutOfBoundsException)
+        PRINT "Rejected sensor temperature: ", e.invalidTemperature
+    CATCH (...)
+        PRINT "Unanticipated calibration failure"
+    END TRY
+END PROCEDURE
+
+DRY RUN TRACE:
+Step | Operation | State / Result
+Set voltage | 2.00 V, illustrative calibration | formula T=100V-500
+Calculate | 100*2.00 - 500 | -300.0 C
+Bounds validation | -300 < -273.15 | throw OutOfBoundsException
+Main catch | Print rejected sensor value | CommitTelemetry skipped
+noexcept boundary | not entered | no terminate
+
+NOTES:
+Important: the source gives no voltage-to-temperature equation, so T=100V-500 and 2.00 V are explicitly marked as illustrative assumptions. noexcept functions must not allow an exception to escape; otherwise std::terminate is called.

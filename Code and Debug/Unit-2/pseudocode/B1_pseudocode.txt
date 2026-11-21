@@ -1,0 +1,53 @@
+CLASS BranchOffice
+PRIVATE:
+    branchID: STRING
+    branchName: STRING
+    currentBalance: REAL
+    STATIC totalVaultReserves: REAL <- 0.0
+    STATIC totalBranchesActive: INTEGER <- 0
+PUBLIC:
+    CONSTRUCTOR(id: STRING, name: STRING, openingDeposit: REAL)
+        IF openingDeposit < 0 THEN ERROR "Invalid opening deposit"; RETURN ENDIF
+        branchID <- id; branchName <- name
+        currentBalance <- openingDeposit
+        totalVaultReserves <- totalVaultReserves + openingDeposit
+        totalBranchesActive <- totalBranchesActive + 1
+    END CONSTRUCTOR
+    METHOD Deposit(amount: REAL)
+        IF amount <= 0 THEN ERROR "Invalid deposit"; RETURN ENDIF
+        currentBalance <- currentBalance + amount
+        totalVaultReserves <- totalVaultReserves + amount
+    END METHOD
+    METHOD Withdraw(amount: REAL) RETURNS BOOLEAN
+        IF amount <= 0 OR amount > currentBalance THEN RETURN FALSE ENDIF
+        currentBalance <- currentBalance - amount
+        totalVaultReserves <- totalVaultReserves - amount
+        RETURN TRUE
+    END METHOD
+    STATIC METHOD GetVaultSummary()
+        PRINT totalBranchesActive, totalVaultReserves
+    END METHOD
+    STATIC METHOD GetGlobalLiquidityRatio(targetReserve: REAL) RETURNS REAL
+        IF targetReserve <= 0 THEN ERROR "Invalid target"; RETURN 0 ENDIF
+        RETURN totalVaultReserves / targetReserve
+    END METHOD
+ENDCLASS
+BEGIN MAIN
+    Branch1 <- NEW BranchOffice("B1", "North", 200000)
+    Branch2 <- NEW BranchOffice("B2", "South", 100000)
+    Branch1.Deposit(150000)
+    success: BOOLEAN <- Branch2.Withdraw(50000)
+    BranchOffice.GetVaultSummary()
+    ratio: REAL <- BranchOffice.GetGlobalLiquidityRatio(500000)
+    PRINT success, ratio
+END MAIN
+
+TRACE
+Operation | B1 | B2 | Static reserves | Branches
+Start | 0 | 0 | 0 | 0
+Create B1 | 200000 | 0 | 200000 | 1
+Create B2 | 200000 | 100000 | 300000 | 2
+B1 +150000 | 350000 | 100000 | 450000 | 2
+B2 -50000 | 350000 | 50000 | 400000 | 2
+Ratio 400000/500000 | 350000 | 50000 | 0.8 | 2
+Withdrawal succeeds; final reserves = 400000 and active branches = 2. Initial balances are illustrative because the question provides no initial values.

@@ -1,0 +1,67 @@
+CLASS ATM_SessionController
+  PRIVATE:
+    presetPIN: INTEGER ← 4821
+    balance: REAL ← 1000
+    attempts: INTEGER ← 0
+    authenticated, active: BOOLEAN
+  PUBLIC:
+    METHOD Run()
+      pin, option: INTEGER
+      amount: REAL
+      authenticated ← FALSE
+      WHILE attempts < 3 AND NOT authenticated DO
+        INPUT pin
+        attempts ← attempts + 1
+        IF pin = presetPIN THEN
+          authenticated ← TRUE
+          PRINT "Authentication successful"
+        ELSE
+          PRINT "Incorrect PIN"
+        ENDIF
+      ENDWHILE
+      IF NOT authenticated THEN
+        PRINT "Card locked"
+        RETURN
+      ENDIF
+      active ← TRUE
+      WHILE active DO
+        PRINT "1 Balance  2 Deposit  3 Withdraw  4 Exit"
+        INPUT option
+        SWITCH option
+          CASE 1:
+            PRINT balance
+            BREAK
+          CASE 2:
+            INPUT amount
+            IF amount > 0 THEN
+              balance ← balance + amount
+              PRINT "Deposit successful"
+            ELSE PRINT "Invalid deposit" ENDIF
+            BREAK
+          CASE 3:
+            INPUT amount
+            IF amount <= 0 THEN
+              PRINT "Invalid withdrawal"
+            ELSE IF amount > balance THEN
+              PRINT "Insufficient funds"
+            ELSE IF amount MOD 100 != 0 THEN
+              PRINT "Withdrawal must be multiple of 100"
+            ELSE
+              balance ← balance - amount
+              PRINT "Withdrawal successful"
+            ENDIF
+            BREAK
+          CASE 4:
+            active ← FALSE
+            PRINT "Session ended"
+            BREAK
+          DEFAULT:
+            PRINT "Invalid menu option"
+        ENDSWITCH
+      ENDWHILE
+    END METHOD
+ENDCLASS
+BEGIN Main
+  atm: ATM_SessionController
+  atm.Run()
+END

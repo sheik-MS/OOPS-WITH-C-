@@ -1,0 +1,65 @@
+SECTION B / QUESTION 2: Resilient Banking Engine with Nested Try-Catch & Rethrowing
+=================================================================
+
+CLASS TransactionException EXTENDS Exception
+PUBLIC:
+    reason AS STRING
+    CONSTRUCTOR(message) : Exception(message)
+        reason <- message
+ENDCLASS
+CLASS AccountFrozenException INHERITS TransactionException
+PUBLIC:
+    CONSTRUCTOR() : TransactionException("Account is frozen")
+ENDCLASS
+CLASS DailyLimitExceededException INHERITS TransactionException
+PUBLIC:
+    excessAmount AS REAL
+    CONSTRUCTOR(excess) : TransactionException("Daily limit exceeded")
+        excessAmount <- excess
+ENDCLASS
+
+PROCEDURE DebitLedger(isFrozen AS BOOLEAN, alreadyDebited AS REAL,
+                      withdrawal AS REAL)
+    IF isFrozen THEN THROW NEW AccountFrozenException()
+    IF withdrawal <= 0 THEN
+        THROW NEW TransactionException("Withdrawal must be positive")
+    IF alreadyDebited + withdrawal > 50000 THEN
+        THROW NEW DailyLimitExceededException(
+            alreadyDebited + withdrawal - 50000)
+    END IF
+    PRINT "Debit of $", withdrawal, " posted"
+END PROCEDURE
+
+PROCEDURE AuditTransactionWrapper(isFrozen, todayTotal, amount)
+    TRY
+        DebitLedger(isFrozen, todayTotal, amount)
+    CATCH (REF e AS TransactionException)
+        PRINT "SECURITY AUDIT: ", e.reason
+        RETHROW  // bare rethrow; original subtype preserved
+    END TRY
+END PROCEDURE
+
+PROCEDURE Main()
+    TRY
+        AuditTransactionWrapper(TRUE, 0, 1000)
+    CATCH (REF e AS AccountFrozenException)
+        PRINT "Client notice: account frozen; debit denied"
+    CATCH (REF e AS DailyLimitExceededException)
+        PRINT "Client notice: limit exceeded by $", e.excessAmount
+    CATCH (REF e AS TransactionException)
+        PRINT "Client notice: ", e.reason
+    CATCH (...)
+        PRINT "Unexpected banking error"
+    END TRY
+END PROCEDURE
+
+DRY RUN TRACE:
+Step | Operation | State / Result
+Main | Attempt withdrawal $1000; frozen=TRUE | enter wrapper
+DebitLedger | frozen test TRUE | throws AccountFrozenException
+Wrapper catch | TransactionException& binds derived | security audit logged
+RETHROW | original AccountFrozenException | propagates
+Main specific catch | AccountFrozenException handler | deny debit
+
+NOTES:
+No debit is posted. The exception is logged once and handled specifically in Main.

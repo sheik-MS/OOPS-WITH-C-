@@ -1,0 +1,28 @@
+Composite canvas chaining
+
+CLASS Point2D
+ PRIVATE: x REAL; y REAL
+ PUBLIC: CONSTRUCTOR(a=0,b=0): x<-a; y<-b
+ METHOD SetCoordinates(a,b): x<-a; y<-b
+ METHOD GetX() RETURNS REAL: RETURN x
+ METHOD GetY() RETURNS REAL: RETURN y
+ENDCLASS
+CLASS Circle
+ PRIVATE: centerPoint Point2D; radius REAL
+ PUBLIC: CONSTRUCTOR(): centerPoint<-NEW Point2D(0,0); radius<-1
+ METHOD SetCenter(newX,newY) RETURNS REF Circle
+  centerPoint.SetCoordinates(newX,newY); RETURN REF THIS
+ END METHOD
+ METHOD SetRadius(r) RETURNS REF Circle
+  IF r>0 THEN radius<-r ELSE PRINT "Invalid radius" ENDIF
+  RETURN REF THIS
+ END METHOD
+ METHOD Draw(): PRINT "Circle center:",centerPoint.GetX(),centerPoint.GetY(),"Radius:",radius
+ENDCLASS
+BEGIN MAIN
+ DECLARE myCircle AS Circle
+ myCircle.SetCenter(12.5,30.0).SetRadius(7.5).Draw()
+END MAIN
+
+TRACE
+Initial (0,0), r=1; SetCenter -> (12.5,30), r=1; SetRadius -> (12.5,30), r=7.5; Draw outputs center (12.5,30), radius 7.5.

@@ -1,0 +1,56 @@
+UNIT III | SECTION B
+Polynomial with Deep Copy, [] and Addition
+
+CLASS Polynomial
+ PRIVATE:
+  degree AS INTEGER
+  coeffArray AS POINTER TO REAL
+ PUBLIC:
+  CONSTRUCTOR(deg AS INTEGER)
+    IF deg < 0 THEN RAISE InvalidDegree ENDIF
+    degree <- deg
+    coeffArray <- ALLOCATE ARRAY[degree+1] OF REAL
+    FOR k <- 0 TO degree DO coeffArray[k] <- 0.0 ENDFOR
+  END CONSTRUCTOR
+  COPY CONSTRUCTOR(REF other AS CONST Polynomial)
+    degree <- other.degree
+    coeffArray <- ALLOCATE ARRAY[degree+1] OF REAL
+    FOR k <- 0 TO degree DO coeffArray[k] <- other.coeffArray[k] ENDFOR
+  END COPY CONSTRUCTOR
+  METHOD Assign(REF other AS CONST Polynomial) RETURNS REF Polynomial
+    IF ADDRESS(THIS) != ADDRESS(other) THEN
+      fresh <- ALLOCATE ARRAY[other.degree+1] OF REAL
+      FOR k <- 0 TO other.degree DO fresh[k] <- other.coeffArray[k] ENDFOR
+      DEALLOCATE ARRAY coeffArray; coeffArray <- fresh; degree <- other.degree
+    ENDIF
+    RETURN REF THIS
+  END METHOD
+  OPERATOR [](index AS INTEGER) RETURNS REF REAL
+    IF index < 0 OR index > degree THEN RAISE IndexOutOfRange ENDIF
+    RETURN REF coeffArray[index]
+  END OPERATOR
+  OPERATOR +(REF rhs AS CONST Polynomial) RETURNS Polynomial
+    sum <- Polynomial(MAX(degree, rhs.degree))
+    FOR k <- 0 TO sum.degree DO
+      IF k <= degree THEN sum.coeffArray[k] <- sum.coeffArray[k]+coeffArray[k] ENDIF
+      IF k <= rhs.degree THEN sum.coeffArray[k] <- sum.coeffArray[k]+rhs.coeffArray[k] ENDIF
+    ENDFOR
+    RETURN sum AS VALUE
+  END OPERATOR
+  DESTRUCTOR()
+    DEALLOCATE ARRAY coeffArray; coeffArray <- NULL
+  END DESTRUCTOR
+ENDCLASS
+MAIN
+  p1 <- Polynomial(2); p1[0] <- 5; p1[1] <- 2; p1[2] <- 3
+  p2 <- Polynomial(3); p2[0] <- 7; p2[1] <- 0; p2[2] <- 1; p2[3] <- 4
+  p3 <- p1 + p2
+  OUTPUT COEFFICIENTS(p3)  // [12, 2, 4, 4]
+END MAIN
+TRACE
+Power | p1 coefficient | p2 coefficient | sum
+x^0 | 5 | 7 | 12
+x^1 | 2 | 0 | 2
+x^2 | 3 | 1 | 4
+x^3 | 0 (absent) | 4 | 4
+Result P3(x) = 4x^3 + 4x^2 + 2x + 12

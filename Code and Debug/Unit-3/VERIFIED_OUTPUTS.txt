@@ -1,0 +1,25 @@
+A1_DynamicString.cpp
+Antigravity C++
+
+A2_AudioBuffer.cpp
+Allocated buffer #1 (5 samples)
+Deep-copied into buffer #2 from #1
+Processing sample 0: 0
+Deallocating buffer #2
+Back in main, sample 0: 0
+Deallocating buffer #1
+
+A3_FractionStream.cpp
+3/4
+
+A4_StepCounter.cpp
+Prefix snapshot c2: 11
+After prefix c1: 11
+Postfix snapshot c3: 11
+After postfix c1: 12
+After chained prefix c1: 14
+
+A5_MathVector.cpp
+Equal: true
+Sum: (4, 6)
+Componentwise power 2: (4, 9)

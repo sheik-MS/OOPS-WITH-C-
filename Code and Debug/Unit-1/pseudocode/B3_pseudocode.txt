@@ -1,0 +1,26 @@
+CONSTANT GYRO ← 0x01, ACCEL ← 0x02
+CONSTANT ALTIMETER ← 0x04, GPS ← 0x08
+CONSTANT LOW_BATTERY ← 0x10, OVER_TEMP ← 0x20
+CONSTANT RADIO ← 0x40, FATAL ← 0x80
+CONSTANT REQUIRED ← GYRO OR ACCEL OR ALTIMETER OR GPS
+CONSTANT INHIBITORS ← LOW_BATTERY OR OVER_TEMP OR FATAL
+BEGIN CheckFlightReadiness(statusRegister: INTEGER)
+  observed, missing, faults: INTEGER
+  ready: BOOLEAN
+  observed ← statusRegister AND REQUIRED
+  missing ← observed XOR REQUIRED
+  faults ← statusRegister AND INHIBITORS
+  IF (faults AND LOW_BATTERY) != 0 THEN PRINT "Low battery" ENDIF
+  IF (faults AND OVER_TEMP) != 0 THEN PRINT "Over-temperature" ENDIF
+  IF (faults AND FATAL) != 0 THEN PRINT "Fatal actuator failure" ENDIF
+  IF (missing AND GYRO) != 0 THEN PRINT "Missing gyroscope (bit 0)" ENDIF
+  IF (missing AND ACCEL) != 0 THEN PRINT "Missing accelerometer (bit 1)" ENDIF
+  IF (missing AND ALTIMETER) != 0 THEN PRINT "Missing altimeter (bit 2)" ENDIF
+  IF (missing AND GPS) != 0 THEN PRINT "Missing GPS (bit 3)" ENDIF
+  ready ← (missing = 0) AND (faults = 0)
+  IF ready THEN PRINT "READY" ELSE PRINT "NOT READY" ENDIF
+END
+BEGIN Main
+  CheckFlightReadiness(0x4F)
+  CheckFlightReadiness(0x3B)
+END

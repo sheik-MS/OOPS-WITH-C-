@@ -1,0 +1,33 @@
+INLINE FUNCTION FormatPrefix(prefixTag: STRING) RETURNS STRING
+    RETURN "[" + prefixTag + "] "
+END FUNCTION
+FUNCTION LogEvent(message: STRING)
+    PRINT FormatPrefix("INFO") + message
+END FUNCTION
+FUNCTION LogEvent(message: STRING, severityLevel: INTEGER, timestamp: STRING = "00:00:00")
+    severity: STRING
+    IF severityLevel = 1 THEN severity <- "LOW"
+    ELSE IF severityLevel = 2 THEN severity <- "MEDIUM"
+    ELSE IF severityLevel = 3 THEN severity <- "CRITICAL"
+    ELSE severity <- "UNKNOWN"
+    ENDIF
+    PRINT FormatPrefix(severity) + "@ " + timestamp + " : " + message
+END FUNCTION
+FUNCTION LogEvent(errorCode: INTEGER, systemModule: STRING)
+    PRINT FormatPrefix("HARDWARE_FAULT") + "Module: " + systemModule
+          + " -> Error Code: 0x" + TO_HEX(errorCode)
+END FUNCTION
+BEGIN MAIN
+    LogEvent("System started")
+    LogEvent("Motor warm", 2)
+    LogEvent("Motor stopped", 3, "12:30:00")
+    LogEvent(26, "MOTOR")
+END MAIN
+
+TRACE
+Call | Selected signature | Defaults / output
+1 argument | LogEvent(STRING) | [INFO] System started
+2 arguments | LogEvent(STRING,INTEGER,STRING) | timestamp defaults 00:00:00; [MEDIUM] @ 00:00:00 : Motor warm
+3 arguments | LogEvent(STRING,INTEGER,STRING) | [CRITICAL] @ 12:30:00 : Motor stopped
+hardware | LogEvent(INTEGER,STRING) | [HARDWARE_FAULT] Module: MOTOR -> Error Code: 0x1A
+The original requested signature with severityLevel = 1 must not coexist with LogEvent(message) under the same name: both are viable for one STRING argument.

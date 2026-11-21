@@ -1,0 +1,6 @@
+Compiler: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror
+Compilation: PASS
+Exit: 0
+
+Serializing H.264 Video Frame: 1042
+Packet size: 4096 bytes

@@ -1,0 +1,38 @@
+CLASS TaxCalculationEngine
+  PUBLIC:
+    METHOD Calculate(grossAnnualSalary: REAL,
+                     deduction80C: REAL,
+                     deductionHealthInsurance: REAL) RETURNS INTEGER
+      eligible80C, eligibleHealth, taxableIncome: REAL
+      rawTax, cess, finalTax: REAL
+      roundedTax: INTEGER
+      IF grossAnnualSalary < 0 OR deduction80C < 0 OR
+         deductionHealthInsurance < 0 THEN
+        PRINT "Invalid input"
+        RETURN 0
+      ENDIF
+      eligible80C ← MIN(deduction80C, 150000)
+      eligibleHealth ← MIN(deductionHealthInsurance, 25000)
+      taxableIncome ← MAX(0, grossAnnualSalary - eligible80C - eligibleHealth)
+      rawTax ← 0
+      IF taxableIncome > 250000 THEN
+        rawTax ← rawTax + MIN(taxableIncome - 250000, 250000) * 0.05
+      ENDIF
+      IF taxableIncome > 500000 THEN
+        rawTax ← rawTax + MIN(taxableIncome - 500000, 500000) * 0.20
+      ENDIF
+      IF taxableIncome > 1000000 THEN
+        rawTax ← rawTax + (taxableIncome - 1000000) * 0.30
+      ENDIF
+      cess ← rawTax * 0.04
+      finalTax ← rawTax + cess
+      roundedTax ← CAST_TO_INTEGER(finalTax + 0.5)
+      RETURN roundedTax
+    END METHOD
+ENDCLASS
+BEGIN Main
+  engine: TaxCalculationEngine
+  tax: INTEGER
+  tax ← engine.Calculate(1200000, 180000, 30000)
+  PRINT tax
+END

@@ -1,0 +1,33 @@
+BEGIN DivisorAndPrimeEngine
+  N, d, paired, sumOfDivisors: INTEGER
+  properDivisors: ARRAY OF INTEGER
+  REPEAT
+    INPUT N
+    IF N <= 0 THEN PRINT "Enter a positive integer" ENDIF
+  UNTIL N > 0
+  properDivisors ← EMPTY ARRAY
+  IF N = 1 THEN
+    sumOfDivisors ← 0
+  ELSE
+    APPEND 1 TO properDivisors
+    sumOfDivisors ← 1
+    FOR d ← 2 TO FLOOR(SQRT(N)) STEP 1
+      IF N MOD d != 0 THEN
+        CONTINUE
+      ENDIF
+      paired ← N DIV d
+      APPEND d TO properDivisors
+      sumOfDivisors ← sumOfDivisors + d
+      IF paired != d THEN
+        APPEND paired TO properDivisors
+        sumOfDivisors ← sumOfDivisors + paired
+      ENDIF
+    ENDFOR
+  ENDIF
+  SORT properDivisors ASCENDING
+  PRINT properDivisors, sumOfDivisors
+  IF sumOfDivisors = N THEN PRINT "Perfect"
+  ELSE IF sumOfDivisors > N THEN PRINT "Abundant"
+  ELSE PRINT "Deficient"
+  ENDIF
+END

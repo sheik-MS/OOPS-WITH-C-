@@ -1,0 +1,55 @@
+SECTION B / QUESTION 3: Polymorphic Game Engine with Virtual Destructors
+=================================================================
+
+ABSTRACT CLASS GameObject
+PUBLIC:
+    PURE VIRTUAL METHOD Update(deltaTime AS REAL)
+    PURE VIRTUAL METHOD Render()
+    VIRTUAL DESTRUCTOR()
+        PRINT "GameObject destructor"
+ENDCLASS
+
+CLASS ParticleSystem INHERITS PUBLIC GameObject
+PRIVATE:
+    positions AS POINTER TO REAL
+    particleCount AS INTEGER
+PUBLIC:
+    CONSTRUCTOR(count)
+        particleCount <- count
+        positions <- ALLOCATE ARRAY[2 * count] OF REAL
+        FOR i <- 0 TO 2 * count - 1 DO positions[i] <- 0 END FOR
+    OVERRIDE METHOD Update(deltaTime AS REAL)
+        FOR i <- 0 TO particleCount - 1 DO
+            positions[2*i] <- positions[2*i] + deltaTime
+        END FOR
+    OVERRIDE METHOD Render()
+        PRINT "Rendering ", particleCount, " particles"
+    OVERRIDE DESTRUCTOR()
+        DEALLOCATE ARRAY positions
+        positions <- NULL
+        PRINT "ParticleSystem destructor"
+ENDCLASS
+
+PROCEDURE Main()
+    DECLARE sceneEntities AS ARRAY[1] OF POINTER TO GameObject
+    sceneEntities[0] <- NEW ParticleSystem(3)
+    FOR i <- 0 TO 0 DO
+        sceneEntities[i]->Update(0.016)
+        sceneEntities[i]->Render()
+    END FOR
+    FOR i <- 0 TO 0 DO
+        DEALLOCATE sceneEntities[i]
+        sceneEntities[i] <- NULL
+    END FOR
+END PROCEDURE
+
+DRY RUN TRACE:
+Step | Operation | State / Result
+Allocate | GameObject* -> ParticleSystem(3) | heap array of 6 REAL
+Update | Three x-coordinates increment by .016 | dynamic dispatch
+Render | Rendering 3 particles | dynamic dispatch
+DEALLOCATE base pointer | ParticleSystem destructor called | release 6 REAL
+Chained destructor | GameObject destructor runs | all resources released
+
+NOTES:
+Because ~GameObject is virtual, deletion through GameObject* invokes the complete derived-to-base destructor chain.
